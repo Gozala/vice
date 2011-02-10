@@ -1,3 +1,0 @@
-[submodule "support/ace"]
-	path = support/ace
-	url = git://github.com/Gozala/ace.git
