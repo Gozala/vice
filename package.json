@@ -15,7 +15,10 @@
   , "lib": "./lib"
   , "test": "./test"
   }
-, "dependencies": { "test": ">=0.0.10" }
+, "dependencies":
+  { "test": ">=0.0.10"
+  , "ace": ">=0.1.5"
+  }
 , "main": "./lib/vice.js"
 , "engines":
   { "node": ">=0.1.103"
