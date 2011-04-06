@@ -31,8 +31,10 @@ exports.startup = function(data) {
 
     var container = document.getElementById("editor");
     env.editor = new Editor(new Renderer(container, theme));
-    env.editor.setSelectionStyle("text"); // "line"
-    env.editor.setSession(session)
+    // Each editor should contain reference to an `env` which will be used be
+    // passed to the commands executed by keybindings.
+    env.editor.env = Object.create(env);
+
 
     function onResize() {
       container.style.width = (document.documentElement.clientWidth) + "px";

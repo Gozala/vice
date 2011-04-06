@@ -118,14 +118,15 @@ $         To the end of the line.  When a count is given also go
         "pilot/index",
         "cockpit/index",
         "ace/defaults",
+        "ace/keyboard",
         "vice/vice",
         "launcher"
       ];
 
       require(config, deps, function() {
           var catalog = require("pilot/plugin_manager").catalog;
-          var env = require("pilot/environment").create();
-          catalog.registerPlugins(plugins).then(function() {
+          var env = window.env = require("pilot/environment").Environment();
+          catalog.registerPlugins(plugins, { env: env }).then(function() {
               catalog.startupPlugins({ env: env });
           });
       });
