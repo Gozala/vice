@@ -8,7 +8,10 @@
 'use strict';
 
 var types = require('./params')
+var canon = require("pilot/canon")
+var event = require("pilot/event")
 var StateHandler = require("ace/keyboard/state_handler").StateHandler
+var keyUtil  = require("pilot/keys");
 var matchCharacterOnly =  require("ace/keyboard/state_handler").matchCharacterOnly
 
 
@@ -82,7 +85,7 @@ var states = exports.states = {
       params: [ types.count ]
     },
     {
-      regex:  [ types.count.regex, 'h' ],
+      regex:  [ types.count.regex, 'h|backspace' ],
       exec:   "moveBack",
       params: [ types.count ]
     },
@@ -141,10 +144,35 @@ var states = exports.states = {
       key: "esc",
       exec: 'stop',
       then: "start"
+    },
+    {
+      key: 'backspace',
+      exec: 'backspace'
     }
   ]
 }
 
-exports.bindings = new StateHandler(states)
+var handler = new StateHandler(states)
+exports.bindings = function(env) {
+  var data = {}
+  return {
+    setKeyboardHandler: function() {},
+    getKeyboardHandler: function() { return handler },
+    handle: function handle(e, hashId, keyOrText, keyCode) {
+      var action = handler.handleKeyboard(data, hashId, keyOrText, keyCode, e)
+      if ((!action || !action.command) && hashId === 0 && keyCode === 0)
+        action = { command: "inserttext", args: { text: keyOrText } }
+      if (canon && canon.exec(action.command, env, "editor", action.args))
+        return event.stopEvent(e)
+    },
+    onCommandKey: function onCommandKey(event, hashId, keyCode) {
+      var keyString = keyUtil.keyCodeToString(keyCode)
+      this.handle(event, hashId, keyString, keyCode)
+    },
+    onTextInput: function onTextInput(input) {
+      this.handle({}, 0, input, 0)
+    }
+  }
+}
 
 });

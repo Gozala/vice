@@ -12,6 +12,7 @@ var env
 
 var keyboardBindings = require('./keyboard').bindings
 var utils = require('./utils')
+var defaultKeyboardBindings;
 
 var settings = {
   isVimMode: {
@@ -21,11 +22,12 @@ var settings = {
     defaultValue: true,
     onChange: function onChange(event) {
       if (event.value) {
-        env.editor.setKeyboardHandler(keyboardBindings)
+        defaultKeyboardBindings = env.editor.keyBinding
+        env.editor.keyBinding = keyboardBindings(env);
         utils.normalMode(env)
       } else {
         utils.insertMode(env)
-        env.editor.setKeyboardHandler(null)
+        env.editor.keyBinding = defaultKeyboardBindings;
       }
     }
   }
