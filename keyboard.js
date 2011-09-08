@@ -22,7 +22,7 @@ var states = exports.states = {
       then: "start"
     },
     {
-      regex: '^:$',
+      regex: '^:|shift-;|shift-º$', // Webkit gets shift-º for some reason.
       exec: 'commandLine'
     },
     {
