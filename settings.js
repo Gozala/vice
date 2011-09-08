@@ -10,9 +10,8 @@
 // save `env` given on startup and use it in setting change listeners.
 var env
 
-var keyboardBindings = require('./keyboard').bindings
+var handler = require('./keyboard').handler
 var utils = require('./utils')
-var defaultKeyboardBindings;
 
 var settings = {
   isVimMode: {
@@ -22,12 +21,11 @@ var settings = {
     defaultValue: true,
     onChange: function onChange(event) {
       if (event.value) {
-        defaultKeyboardBindings = env.editor.keyBinding
-        env.editor.keyBinding = keyboardBindings(env);
+        env.editor.setKeyboardHandler(handler)
         utils.normalMode(env)
       } else {
+        env.editor.setKeyboardHandler(null)
         utils.insertMode(env)
-        env.editor.keyBinding = defaultKeyboardBindings;
       }
     }
   }
