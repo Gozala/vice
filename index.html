@@ -11,50 +11,6 @@
           padding: 0;
           height: 100%;
           width: 100%;
-          background: #2E2E2E;
-      }
-
-      #cockpitInput, #cockpitOutput, .cptOutput, .cptHints,
-      .cptCompletion span {
-        color: #ccc !important;
-        background: rgba(24, 24, 24, 0.8) !important;
-        border-color: rgb(24, 24, 24) !important;
-        box-shadow: 5px -1px 18px #000;
-      }
-
-      .cptRowIn, .cptRowOut {
-        border-radius: 4px;
-        padding: 1px;
-        margin: 2px;
-        background: rgba(64, 64, 64, 0.2) !important;
-      }
-      .cptRowIn *, .cptRowIn, .cptRowOut {
-        color: #ccc !important;
-      }
-
-      .cptRowOut p {
-        margin: 2px;
-      }
-
-      #cockpitInput {
-          position: absolute;
-          width: 100%;
-          bottom: 0px;
-          padding: 3px;
-
-          border: none;
-          outline: none;
-          font-family: monaco consolas, courier, monospace;
-          font-size: 14px;
-      }
-
-      #cockpitOutput {
-        padding: 10px;
-        margin: 0 15px;
-        -moz-border-radius-topleft: 10px;
-        -moz-border-radius-topright: 10px;
-        border-top-left-radius: 4px;
-        border-top-right-radius: 4px;
       }
     </style>
   </head>
@@ -114,42 +70,17 @@ $         To the end of the line.  When a count is given also go
 */</textarea>
     <div id="editor"></div>
     <input id="cockpitInput" type="text"/>
-
-    <script src="demo/require.js" type="text/javascript" charset="utf-8"></script>
     <script type="text/javascript">
-      var config = {
+      var require = {
         paths: {
           ace: "../support/ace/lib/ace",
           cockpit: "../support/cockpit/lib/cockpit",
           pilot: "../support/pilot/lib/pilot",
-          vice: "../",
-          launcher: "../demo/launcher"
+          vice: "../support/vice",
+          launcher: "../demo/launcher",
         }
       };
-
-      var deps = [
-        "pilot/fixoldbrowsers",
-        "pilot/plugin_manager",
-        "pilot/settings",
-        "pilot/environment",
-        "launcher"
-      ];
-
-      var plugins = [
-        "pilot/index",
-        "cockpit/index",
-        "ace/defaults",
-        "vice/vice",
-        "launcher"
-      ];
-
-    require(config, deps, function() {
-        var catalog = require("pilot/plugin_manager").catalog;
-        catalog.registerPlugins(plugins).then(function() {
-            var env = require("pilot/environment").create();
-            catalog.startupPlugins({ env: env });
-        });
-    });
     </script>
+    <script src="./demo/require.js" data-main="./demo/boot.js" type="text/javascript" charset="utf-8"></script>
   </body>
 </html>
