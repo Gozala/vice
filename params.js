@@ -20,7 +20,7 @@ exports.bang = {
 
 exports.count = {
   name: 'count',
-  regex: '([0-9]*)',
+  regex: '^([0-9]*)',
   match: 1,
   type: 'number',
   defaultValue: 1
@@ -31,6 +31,16 @@ exports.line = {
   regex: '([0-9]+)',
   match: 1,
   type: 'number'
+}
+
+exports.char = {
+  name: 'char',
+  regex: '((?:shift-){0,1}[\\s\\S])',
+  match: 2,
+  type: 'text',
+  valueOf: function(input) {
+    return input.length > 1 ? input.replace('shift-', '').toUpperCase() : input
+  }
 }
 
 });

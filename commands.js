@@ -94,7 +94,6 @@ var commands = exports.commands = {
     man: 'Stop Insert mode as soon as possible. Works like' +
          'typing <Esc> in **insert** mode.',
     exec: function stop(env, params, request) {
-      moveBack(env, 1)
       normalMode(env)
     }
   },
@@ -183,8 +182,42 @@ var commands = exports.commands = {
   },
   deleteCharBack: function(env, params, request) {
     removePreviosChars(env, params.count)
+  },
+  moveForwardTo: {
+    params: [ types.count, types.char ],
+    exec: function(env, params, request) {
+      utils.moveForwardTo(env, types.char.valueOf(params.char), params.count)
+    }
+  },
+  moveForwardAt: {
+    params: [ types.count, types.char ],
+    exec: function(env, params, request) {
+      utils.moveForwardAt(env, types.char.valueOf(params.char), params.count)
+    }
+  },
+  moveBackwardTo: {
+    params: [ types.count, types.char ],
+    exec: function(env, params, request) {
+      utils.moveBackwardTo(env, types.char.valueOf(params.char), params.count)
+    }
+  },
+  moveBackwardAt: {
+    params: [ types.count, types.char ],
+    exec: function(env, params, request) {
+      utils.moveBackwardAt(env, types.char.valueOf(params.char), params.count)
+    }
+  },
+  moveToFirstChar: function(env, params, request) {
+    utils.moveToFirstChar(env)
+  },
+  searchForward: {
+    exec: function(env, params, request) {
+    }
+  },
+  searchBackword: {
+    exec: function(env, params, request) {
+    }
   }
-
 }
 
 exports.plug = function plug(data, reason) {

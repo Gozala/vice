@@ -14,33 +14,41 @@ var StateHandler = require("ace/keyboard/state_handler").StateHandler
 var keyUtil  = require("pilot/keys");
 var matchCharacterOnly =  require("ace/keyboard/state_handler").matchCharacterOnly
 
-
 var states = exports.states = {
   start: [ // normal mode
     {
-      key: ':',
+      key: "esc",
+      exec: 'stop',
+      then: "start"
+    },
+    {
+      regex: '^:$',
       exec: 'commandLine'
     },
     {
-      key:  'i',
+      regex: '^u$',
+      exec: 'undo'
+    },
+    {
+      regex:  '^i$',
       params: [ types.count ],
       exec: 'start',
       then: 'insertMode'
     },
     {
-      key: 'shift-i',
+      regex: '^shift-i$',
       params: [ types.bang ],
       exec: 'start',
       then: 'insertMode'
     },
     { 
-      key: 'a',
+      regex: '^a$',
       params: [ types.count ],
       exec: 'append',
       then: 'insertMode'
     },
     {
-      key: 'shift-a',
+      regex: '^shift-a$',
       params: [ types.count, types.bang ],
       exec: 'append',
       then: 'insertMode'
@@ -90,6 +98,30 @@ var states = exports.states = {
       params: [ types.count ]
     },
     {
+      key: null,
+      regex: [ types.count.regex, 't', types.char.regex ],
+      exec: "moveForwardTo",
+      params: [ types.count, types.char ]
+    },
+    {
+      key: null,
+      regex: [ types.count.regex, 'shift-t', types.char.regex ],
+      exec: "moveBackwardTo",
+      params: [ types.count, types.char ]
+    },
+    {
+      key: null,
+      regex: [ types.count.regex, 'f', types.char.regex ],
+      exec: "moveForwardAt",
+      params: [ types.count, types.char ]
+    },
+    {
+      key: null,
+      regex: [ types.count.regex, 'shift-f', types.char.regex ],
+      exec: "moveBackwardAt",
+      params: [ types.count, types.char ]
+    },
+    {
       regex: [ types.count.regex, 'd', 'd' ],
       exec: 'deleteLines',
       params: [ types.count ]
@@ -99,12 +131,16 @@ var states = exports.states = {
       params: [ types.line ]
     },
     {
-      key: 'shift-4',
+      regex: '^shift-4$',
       exec: 'gotolineend'
     },
     {
-      key: 'shift-6',
+      regex: '^shift-6$',
       exec: 'gotolinestart'
+    },
+    {
+      regex: '^0$',
+      exec: 'moveToFirstChar'
     },
     {
       regex: [ types.count.regex, '(e|shift-e)' ],
@@ -117,11 +153,11 @@ var states = exports.states = {
       params: [ types.count ]
     },
     {
-      key: 'shift-g',
+      regex: '^shift-g$',
       exec: 'gotoend'
     },
     {
-      regex: [ 'g', 'g' ],
+      regex: '^gg$',
       exec: 'gotostart'
     },
     {
@@ -135,9 +171,13 @@ var states = exports.states = {
       params: [ types.count ]
     },
     {
+      regex: 'command-s',
+      exec: 'write'
+    },
+    {
       comment: 'Catch some keyboard input to stop it here',
       match: matchCharacterOnly
-    }
+    },
   ],
   insertMode: [
     {
