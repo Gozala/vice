@@ -16,10 +16,17 @@ var matchCharacterOnly =  require("ace/keyboard/state_handler").matchCharacterOn
 
 var states = exports.states = {
   start: [ // normal mode
+    { key: 'v',
+      exec: 'enableVisualMode'
+    },
     {
       key: "esc",
       exec: 'stop',
       then: "start"
+    },
+    {
+      key: '/',
+      exec: 'search'
     },
     {
       regex: '^:|shift-;|shift-º$', // Webkit gets shift-º for some reason.

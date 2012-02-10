@@ -22,12 +22,18 @@ var settings = {
     onChange: function onChange(event) {
       if (event.value) {
         env.editor.setKeyboardHandler(handler)
-        utils.normalMode(env)
+        utils.normalMode(env.editor)
       } else {
         env.editor.setKeyboardHandler(null)
-        utils.insertMode(env)
+        utils.insertMode(env.editor)
       }
     }
+  },
+  isKeyword: {
+    name: 'isKeyword',
+    description: 'Keywords are used in searching and recognizing with many commands',
+    type: 'text',
+    defaultValue: '@,48-57,_,192-255'
   }
 }
 

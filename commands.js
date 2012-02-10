@@ -7,7 +7,9 @@
 
 'use strict';
 
+var motion = require('./motion')
 var canon = require('pilot/canon')
+var baseTypes = require('pilot/types')
 var types = require('./params')
 var utils = require('./utils'),
             moveToEndOfFollowingWord = utils.moveToEndOfFollowingWord,
@@ -45,15 +47,13 @@ function isBang(params) {
   return '!' === params['!']
 }
 
-function FocusEditor(env, target) {
+function FocusEditor(editor, target) {
   function focusEditor(event) {
     // If escape key we set focus to the editor.
     if (event.keyCode === 27) {
-      event.stopPropagation()
-      event.preventDefault()
-      target.value = ""
+      target.value = null
       target.blur()
-      env.editor.focus()
+      editor.focus()
     }
   }
   target.addEventListener("keyup", focusEditor, true);
@@ -61,16 +61,17 @@ function FocusEditor(env, target) {
 }
 
 var conflicts = {
-  'gotoline': 'gotoline'
+  'gotoline': 'gotoline',
+  'find': 'find'
 };
 var commands = exports.commands = {
   commandLine: {
-    exec: function exec(env, params, request) {
-      var cli = document.getElementById("cockpitInput")
-      env.editor.blur()
+    exec: function exec(editor, params, request) {
+      var cli = editor.container.ownerDocument.getElementById("cockpitInput")
+      editor.blur()
       cli.focus()
       // Yeap it's an ugly hack to put focus back to an editor.
-      return exec.inited || (exec.inited = FocusEditor(env, cli))
+      return exec.inited || (exec.inited = FocusEditor(editor, cli))
     }
   },
   start: {
@@ -84,27 +85,33 @@ var commands = exports.commands = {
          'or script is finished.\n' +
          'This command does not work from |:normal ',
     params: [ types['!'] ],
-    exec: function start(env, params, request) {
-      if (isBang(params)) moveToBegining(env)
-      insertMode(env)
+    exec: function start(editor, params, request) {
+      if (isBang(params)) moveToBegining(editor)
+      insertMode(editor)
     }
   },
   stop: {
     description: 'Start **normal** mode',
     man: 'Stop Insert mode as soon as possible. Works like' +
          'typing <Esc> in **insert** mode.',
-    exec: function stop(env, params, request) {
-      normalMode(env)
+    exec: function stop(editor, params, request) {
+      normalMode(editor)
+    }
+  },
+  enableVisualMode: {
+    description: 'Start **visual** mode',
+    exec: function visual(editor, params, request) {
+      utils.visualMode(editor)
     }
   },
   append: {
     description: 'Append text and start **normal** mode',
     man: 'Append text after the cursor / word (if !) word.',
     params: [ types.count, types['!'] ],
-    exec: function append(env, params, request) {
-      if (isBang(params)) moveToEnd(env)
-      else moveForward(env, params.count)
-      insertMode(env)
+    exec: function append(editor, params, request) {
+      if (isBang(params)) moveToEnd(editor)
+      else moveForward(editor, params.count)
+      insertMode(editor)
     }
   },
   openNewLines: {
@@ -112,11 +119,11 @@ var commands = exports.commands = {
     man: 'Begin a new line below / above (if !) the cursor and insert text, ' +
          'repeat `count` times.',
     params: [ types.count, types['!'] ],
-    exec: function openNewLines(env, params, request) {
-      if (isBang(params)) moveUp(env)
-      moveToEnd(env)
-      open(env, params.count)
-      insertMode(env)
+    exec: function openNewLines(editor, params, request) {
+      if (isBang(params)) moveUp(editor)
+      moveToEnd(editor)
+      open(editor, params.count)
+      insertMode(editor)
     }
   },
   substitute: {
@@ -124,108 +131,123 @@ var commands = exports.commands = {
     man: 'Delete `count` characters / lines (if !) and start **insert**' +
          '(s stands for Substitute).',
     params: [ types.count, types['!'] ],
-    exec: function substitute(env, params, request) {
+    exec: function substitute(editor, params, request) {
       if (isBang(params)) {
-        moveUp(env)
-        moveToBegining(env)
-        open(env, 1)
-        removeLines(env, params.count)
-        moveUp(env)
+        moveUp(editor)
+        moveToBegining(editor)
+        open(editor, 1)
+        removeLines(editor, params.count)
+        moveUp(editor)
       } else {
-        removeFollowingChars(env, params.count)
+        removeFollowingChars(editor, params.count)
       }
-      insertMode(env)
+      insertMode(editor)
     }
   },
   deleteLines: {
     description: 'Delete [count] lines [into register x] |linewise|',
     params: [ types.count ],
-    exec: function deleteLines(env, params, request) {
-      removeLines(env, params.count)
+    exec: function deleteLines(editor, params, request) {
+      removeLines(editor, params.count)
     }
   },
-  jumptoline: function(env, params, request) {
-    env.editor.gotoLine(params.line)
+  jumptoline: function(editor, params, request) {
+    editor.gotoLine(params.line)
   },
   moveUp: {
     params: [ types.count ],
-    exec: function(env, params, request) {
-      moveUp(env, params.count)
+    exec: function(editor, params, request) {
+      moveUp(editor, params.count)
     }
   },
   moveDown: {
     params: [ types.count ],
-    exec: function(env, params, request) {
-      moveDown(env, params.count)
+    exec: function(editor, params, request) {
+      moveDown(editor, params.count)
     }
   },
   moveBack: {
     params: [ types.count ],
-    exec: function(env, params, request) {
-      moveBack(env, params.count)
+    exec: function(editor, params, request) {
+      moveBack(editor, params.count)
     }
   },
   moveForward: {
     params: [ types.count ],
-    exec: function(env, params, request) {
-      moveForward(env, params.count)
+    exec: function(editor, params, request) {
+      moveForward(editor, params.count)
     }
   },
-  goToEndWord: function(env, params, request) {
-    moveToEndOfFollowingWord(env, params.count)
+  goToEndWord: function(editor, params, request) {
+    moveToEndOfFollowingWord(editor, params.count)
   },
-  goToBackWord: function(env, params, request) {
-    moveToEndOfPassedWord(env, params.count)
+  goToBackWord: function(editor, params, request) {
+    moveToEndOfPassedWord(editor, params.count)
   },
-  deleteChar: function(env, params, request) {
-    removeFollowingChars(env, params.count)
+  deleteChar: function(editor, params, request) {
+    removeFollowingChars(editor, params.count)
   },
-  deleteCharBack: function(env, params, request) {
-    removePreviosChars(env, params.count)
+  deleteCharBack: function(editor, params, request) {
+    removePreviosChars(editor, params.count)
   },
   moveForwardTo: {
     params: [ types.count, types.char ],
-    exec: function(env, params, request) {
-      utils.moveForwardTo(env, types.char.valueOf(params.char), params.count)
+    exec: function(editor, params, request) {
+      utils.moveForwardTo(editor, types.char.valueOf(params.char), params.count)
     }
   },
   moveForwardAt: {
     params: [ types.count, types.char ],
-    exec: function(env, params, request) {
-      utils.moveForwardAt(env, types.char.valueOf(params.char), params.count)
+    exec: function(editor, params, request) {
+      utils.moveForwardAt(editor, types.char.valueOf(params.char), params.count)
     }
   },
   moveBackwardTo: {
     params: [ types.count, types.char ],
-    exec: function(env, params, request) {
-      utils.moveBackwardTo(env, types.char.valueOf(params.char), params.count)
+    exec: function(editor, params, request) {
+      utils.moveBackwardTo(editor, types.char.valueOf(params.char), params.count)
     }
   },
   moveBackwardAt: {
     params: [ types.count, types.char ],
-    exec: function(env, params, request) {
-      utils.moveBackwardAt(env, types.char.valueOf(params.char), params.count)
+    exec: function(editor, params, request) {
+      utils.moveBackwardAt(editor, types.char.valueOf(params.char), params.count)
     }
   },
-  moveToFirstChar: function(env, params, request) {
-    utils.moveToFirstChar(env)
+  moveToFirstChar: function(editor, params, request) {
+    utils.moveToFirstChar(editor)
+  },
+  search: {
+    description: 'search all the matchings',
+    params: [{
+      name: 'term',
+      type: 'text',
+      description: 'Search term.'
+    }],
+    exec: function(editor, params, request) {
+      editor.editor.find(params.term)
+      editor.editor.focus()
+    }
   },
   searchForward: {
-    exec: function(env, params, request) {
+    description: 'Search for the given term',
+    exec: function(editor, params, request) {
+      editor.editor.findNext()
     }
   },
   searchBackword: {
-    exec: function(env, params, request) {
+    exec: function(editor, params, request) {
+      editor.editor.findPrevious()
     }
   }
 }
 
 exports.plug = function plug(data, reason) {
-  canon.removeCommands(conflicts)
-  canon.addCommands(exports.commands)
+  data.env.editor.commands.removeCommands(conflicts)
+  data.env.editor.commands.addCommands(exports.commands)
 }
 exports.unplug = function unplug(data, reason) {
-  canon.removeCommands(exports.commands)
+  data.env.editor.commands.removeCommands(exports.commands)
 }
 
 })
