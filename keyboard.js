@@ -3,34 +3,41 @@
          forin: true latedef: false */
 /*global define: true */
 
-!define(function(require, exports, module) {
+define(function(require, exports, module) {
 
 'use strict';
 
 var types = require('./params')
-var canon = require("pilot/canon")
-var event = require("pilot/event")
 var StateHandler = require("ace/keyboard/state_handler").StateHandler
-var keyUtil  = require("pilot/keys");
 var matchCharacterOnly =  require("ace/keyboard/state_handler").matchCharacterOnly
+
+function takes() {
+  return Array.prototype.slice.call(arguments).map(function(item, index) {
+    return {
+      name: index,
+      match: index,
+      type: item
+    }
+  })
+}
 
 var states = exports.states = {
   start: [ // normal mode
     { key: 'v',
-      exec: 'enableVisualMode'
+      exec: 'vice mode visual'
     },
     {
       key: "esc",
-      exec: 'stop',
-      then: "start"
+      exec: 'vice mode normal',
+      then: 'start'
     },
     {
       key: '/',
-      exec: 'search'
+      exec: 'vice find'
     },
     {
       regex: '^:|shift-;|shift-º$', // Webkit gets shift-º for some reason.
-      exec: 'commandLine'
+      exec: 'vice cli'
     },
     {
       regex: '^u$',
@@ -38,104 +45,104 @@ var states = exports.states = {
     },
     {
       regex:  '^i$',
-      params: [ types.count ],
-      exec: 'start',
+      params: takes('editor', 'number'),
+      exec: 'vice mode insert here',
       then: 'insertMode'
     },
     {
       regex: '^shift-i$',
-      params: [ types.bang ],
-      exec: 'start',
+      params: takes('editor', '!'),
+      exec: 'vice mode insert start',
       then: 'insertMode'
     },
     { 
       regex: '^a$',
-      params: [ types.count ],
-      exec: 'append',
+      params: takes('editor'),
+      exec: 'vice mode insert after',
       then: 'insertMode'
     },
     {
       regex: '^shift-a$',
-      params: [ types.count, types.bang ],
-      exec: 'append',
+      params: takes('editor'),
+      exec: 'vice mode insert end',
       then: 'insertMode'
     },
     {
       regex: [ types.count.regex, 'o' ],
-      params: [ types.count ],
-      exec: 'openNewLines',
+      params: takes('editor', 'number'),
+      exec: 'vice line open below',
       then: 'insertMode'
     },
     {
       regex: [ types.count.regex, 'shift-o' ],
-      params: [ types.count, types.bang ],
-      exec: 'openNewLines',
+      params: takes('editor', 'number'),
+      exec: 'vice line open above',
       then: 'insertMode'
     },
     {
       regex: [ types.count.regex, 's' ],
-      params: [ types.count ],
-      exec: 'substitute',
+      params: takes('editor', 'number'),
+      exec: 'vice char substitute',
       then: 'insertMode'
     },
     {
       regex: [ types.count.regex, 'shift-s' ],
-      params: [ types.count, types.bang ],
-      exec: 'substitute',
+      params: takes('editor', 'number'),
+      exec: 'vice line substitute',
       then: 'insertMode'
     },
     {
       regex:  [ types.count.regex, 'k' ],
-      params: [ types.count ],
-      exec:   'moveUp',
+      params: takes('editor', 'number'),
+      exec:   'vice navigate up',
     },
     {
       regex: [ types.count.regex, 'j' ],
-      exec:   'moveDown',
-      params: [ types.count ]
+      exec:   'vice navigate down',
+      params: takes('editor', 'number')
     },
     {
       regex:  [ types.count.regex, 'l' ],
-      exec: "moveForward",
-      params: [ types.count ]
+      exec: 'vice navigate forward',
+      params: takes('editor', 'number')
     },
     {
       regex:  [ types.count.regex, 'h|backspace' ],
-      exec:   "moveBack",
-      params: [ types.count ]
+      exec:   'vice navigate back',
+      params: takes('editor', 'number')
     },
     {
       key: null,
       regex: [ types.count.regex, 't', types.char.regex ],
-      exec: "moveForwardTo",
-      params: [ types.count, types.char ]
+      exec: 'vice navigate char next to',
+      params: takes('editor', 'number', 'char')
     },
     {
       key: null,
       regex: [ types.count.regex, 'shift-t', types.char.regex ],
-      exec: "moveBackwardTo",
-      params: [ types.count, types.char ]
+      exec: 'vice navigate char previous to',
+      params: takes('editor', 'number', 'char')
     },
     {
       key: null,
       regex: [ types.count.regex, 'f', types.char.regex ],
-      exec: "moveForwardAt",
-      params: [ types.count, types.char ]
+      exec: 'vice navigate char next at',
+      params: takes('editor', 'number', 'char')
     },
     {
       key: null,
       regex: [ types.count.regex, 'shift-f', types.char.regex ],
-      exec: "moveBackwardAt",
-      params: [ types.count, types.char ]
+      exec: 'vice navigate char previous at',
+      params: takes('editor', 'number', 'char')
     },
     {
       regex: [ types.count.regex, 'd', 'd' ],
-      exec: 'deleteLines',
-      params: [ types.count ]
+      exec: 'vice line remove',
+      params: takes('editor', 'number')
     },
     { regex: [ types.line.regex, 'shift-g' ],
-      exec: 'jumptoline',
-      params: [ types.line ]
+      exec: 'vice line jump',
+      params: takes('editor', 'number')
     },
     {
       regex: '^shift-4$',
@@ -147,17 +154,17 @@ var states = exports.states = {
     },
     {
       regex: '^0$',
-      exec: 'moveToFirstChar'
+      exec: 'vice navigate start'
     },
     {
       regex: [ types.count.regex, '(e|shift-e)' ],
-      exec: 'goToEndWord',
-      params: [ types.count ]
+      exec: 'vice navigate word end',
+      params: takes('editor', 'number')
     },
     {
       regex: [ types.count.regex, '(b|shift-b)' ],
-      exec: 'goToBackWord',
-      params: [ types.count ]
+      exec: 'vice navigate word start',
+      params: takes('editor', 'number')
     },
     {
       regex: '^shift-g$',
@@ -169,13 +176,13 @@ var states = exports.states = {
     },
     {
       regex: [ types.count.regex, 'x' ],
-      exec: 'deleteChar',
-      params: [ types.count ]
+      exec: 'vice char remove here',
+      params: takes('editor', 'number')
     },
     {
       regex: [ types.count.regex, 'shift-x' ],
-      exec: 'deleteCharBack',
-      params: [ types.count ]
+      exec: 'vice char remove previous',
+      params: takes('editor', 'number')
     },
     {
       regex: 'command-s',
@@ -188,9 +195,9 @@ var states = exports.states = {
   ],
   insertMode: [
     {
-      key: "esc",
-      exec: 'stop',
-      then: "start"
+      key: 'esc',
+      exec: 'vice mode normal',
+      then: 'start'
     },
     {
       key: 'backspace',
@@ -200,27 +207,5 @@ var states = exports.states = {
 }
 
 var handler = exports.handler = new StateHandler(states)
-exports.bindings = function(env) {
-  var data = {}
-  return {
-    handle: function handle(e, hashId, keyOrText, keyCode) {
-      var action = handler.handleKeyboard(data, hashId, keyOrText, keyCode, e)
-      if ((!action || !action.command) && (hashId === 0 || keyCode === 0))
-        action = canon.findKeyCommand(env, "editor", hashId, keyOrText) || { command: "inserttext", args: { text: keyOrText } }
-
-      if (action && canon.exec(action.command || action.name, env, "editor", action.args))
-        return !event.stopEvent(e)
-
-      return false
-    },
-    onCommandKey: function onCommandKey(event, hashId, keyCode, keyString) {
-      keyString = keyString || keyUtil.keyCodeToString(keyCode)
-      return this.handle(event, hashId, keyString, keyCode)
-    },
-    onTextInput: function onTextInput(input) {
-      return this.handle({}, 0, input, 0)
-    }
-  }
-}
 
 });

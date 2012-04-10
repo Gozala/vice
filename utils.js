@@ -86,7 +86,8 @@ exports.moveToEndOfPassedWord = moveToEndOfPassedWord
 function removePreviosChar(editor) {
   doc: "Remove char on the left side of the caret."
 
-  editor.removeLeft()
+  moveBack(editor)
+  editor.remove()
 }
 
 function removePreviosChars(editor, count) {
@@ -99,7 +100,7 @@ exports.removePreviosChars = removePreviosChars
 function removeFollowingChar(editor) {
   doc: "Remove one chare on the right side of the caret."
 
-  editor.removeRight()
+  editor.remove()
 }
 
 function removeFollowingChars(editor, count) {
